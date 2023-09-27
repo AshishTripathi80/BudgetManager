@@ -1,20 +1,45 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React from "react";
+import { Provider } from "react-redux";
+import { PersistGate } from "redux-persist/integration/react";
+import { createStore, applyMiddleware } from "redux";
+import { persistStore, persistReducer } from "redux-persist";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import thunk from "redux-thunk";
+//import rootReducer from "./reducers";
+import budgetReducer from "./src/reducers/budgetReducer";
 
-export default function App() {
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+import BudgetEntryScreen from "./src/components/BudgetEntryScreen";
+import BudgetListingScreen from "./src/components/BudgetListingScreen";
+
+const Stack = createStackNavigator();
+
+const persistConfig = {
+  key: "root",
+  storage: AsyncStorage,
+};
+
+const persistedReducer = persistReducer(persistConfig, budgetReducer);
+const store = createStore(persistedReducer, applyMiddleware(thunk));
+const persistor = persistStore(store);
+
+const App = () => {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <NavigationContainer>
+          <Stack.Navigator initialRouteName="BudgetEntry">
+            <Stack.Screen name="BudgetEntry" component={BudgetEntryScreen} />
+            <Stack.Screen
+              name="BudgetListing"
+              component={BudgetListingScreen}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </PersistGate>
+    </Provider>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default App;
